@@ -8,31 +8,54 @@ which creates a small Akka Http service hosted in Docker.
 Build the application:
 
 
-1. Change to the directory
-2. ```bash
-   $ sbt
-   ```
-3. When in SBT console 
-    ```bash
-   $ assembly
-   ```
-4. exit
-5. docker-compose up from directory. I started to see errors like this
+Change to the directory
+```
+sbt
+```
+When in SBT console 
+```
+assembly
+```
+exit
+
+
+## Running it in Docker (on Windows)
+
+Opened powershell   
+
+```
+docker-compose up
+```
+from directory. I started to see errors like this
    
+```   
    WindowsError: [Error 3] The system cannot find the path specified: 'C:\\Users\\sacha\\Downloads\\akka-http-hello-world-m
    aster\\akka-http-hello-world-master\\target\\streams\\$global\\assemblyOption\\$global\\streams\\assembly\\0c81e49ff9131
    8ea4538d8c1f450394783f174fa_d0f1d04d9e2bf10f3d5102fdc325cbae1bad6aad\\akka\\stream\\AbruptTerminationException$.class'
+```
 
-   Did some googling this seems to be about the long file names that can occur on Windows. So I just copied the entire set of files/src/target etc etc to
-   C:\X folder ignoring any long file names that it said were bad. I simply ignored them
+Did some googling this seems to be about the long file names that can occur on Windows. So I just copied the entire set of files/src/target etc etc to
+C:\X folder ignoring any long file names that it said were bad. I simply ignored them
    
-6. ```bash
-   docker-compose up --build 
-   ```
 
 
-(if container was already running using docker-ps, grab its Id, then docker rm --force <ID>
-7. Use postman to look at http://localhost:8080
+   
+Change to the directory
+```
+C:\X 
+```   
+   
+Then run   
+```
+docker-compose up --build 
+```
+
+
+NOTE : If container was already running using docker-ps, grab its Id, then docker rm --force <ID>
+
+
+
+Use postman to look at http://localhost:8080
    
    
    
