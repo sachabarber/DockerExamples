@@ -54,33 +54,11 @@ docker-compose up --build
 NOTE : If container was already running using docker-ps, grab its Id, then docker rm --force <ID>
 
 
+## Testig It
 
-Use postman to look at http://localhost:8080
+Used postman to look at http://127.0.0.1:8080
    
    
-   
-
-
-
-
-
-
-```bash
-$ sbt assembly
-```
-
-Launch in a Docker container. You need to have Docker and Docker Compose installed.
-
-```bash
-$ docker-compose up
-```
-
-Send a test request, where xxx.xxx.xxx.xxx is the IP address of the Docker container:
-
-```bash
-$ curl http://xxx.xxx.xxx.xxx
-Hello, World!
-```
 
 ## Useful Links
 
