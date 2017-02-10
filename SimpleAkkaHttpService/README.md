@@ -43,7 +43,7 @@ So I then did this
 So I just copied the following files to C:\X
 
 - docker-compose.yml
-- DockerDemo.jar
+- SimpleAkkaHttpService.jar
 - dockerfile
 
    
@@ -58,7 +58,7 @@ docker-compose up --build
 ```
 
 
-NOTE : If container was already running using docker-ps, grab its Id, then docker rm --force <ID>
+NOTE : If container was already running using docker-ps, grab its Id, then docker rm  <ID> --force
 
 
 ## Testing It
