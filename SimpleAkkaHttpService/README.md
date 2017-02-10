@@ -34,10 +34,17 @@ from directory. I started to see errors like this
    8ea4538d8c1f450394783f174fa_d0f1d04d9e2bf10f3d5102fdc325cbae1bad6aad\\akka\\stream\\AbruptTerminationException$.class'
 ```
 
-Did some googling this seems to be about the long file names that can occur on Windows. So I just copied the entire set of files/src/target etc etc to
-C:\X folder ignoring any long file names that it said were bad. I simply ignored them
-   
+Did some googling this seems to be about the long file names that can occur on Windows. 
 
+So I then did this
+
+- Create new directory on C:\ for me this was C:\X
+
+So I just copied the following files to C:\X
+
+- docker-compose.yml
+- DockerDemo.jar
+- dockerfile
 
    
 Change to the directory
@@ -54,9 +61,9 @@ docker-compose up --build
 NOTE : If container was already running using docker-ps, grab its Id, then docker rm --force <ID>
 
 
-## Testig It
+## Testing It
 
-Used postman to look at http://127.0.0.1:8080
+Used postman to look at http://localhost:8080
    
    
 

@@ -6,4 +6,4 @@ ADD . /root
 WORKDIR /root
 
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "target/scala-2.11/SimpleAkkaHttpService.jar"]
+ENTRYPOINT ["java", "-jar", "SimpleAkkaHttpService.jar"]
