@@ -1,0 +1,30 @@
+version: '2'
+
+services:
+    db:
+        image: mysql:latest
+        volumes:
+            - db_data:/var/lib/mysql
+        restart: always
+        environment:
+            MYSQL_ROOT_PASSWORD: sacha
+            MYSQL_USER: sacha
+            MYSQL_PASSWORD: sacha
+        ports:
+            - "3306:3306"
+    webservice:
+        build: .
+        ports:
+            - "8080:8080"
+        depends_on:
+            - db
+volumes:
+    db_data:
+
+
+
+
+
+
+
+
