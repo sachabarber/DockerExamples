@@ -4,6 +4,17 @@ I have started this project using the work found here : [Akka HTTP Docker exampl
 which creates a small Akka Http service hosted in Docker.
 
 
+Cassandra Network check
+
+Get the networks to use with --net switch
+
+docker run -it --link cassandra-1:cassandra --rm cassandra cqlsh cassandra --net simpleakkahttpservicewithcassandra_default
+
+
+
+
+
+
 
 
 # Manually creating MySql
