@@ -6,44 +6,14 @@ which creates a small Akka Http service hosted in Docker.
 
 Cassandra Network check
 
-Get the networks to use with --net switch
+Assuming you have a cassandra container running already, Get the networks to use with --net switch
 
-docker run -it --link cassandra-1:cassandra --rm cassandra cqlsh cassandra --net simpleakkahttpservicewithcassandra_default
-
-
+```docker network ls```
 
 
+Then use the name of the cassandra containers network
 
-
-
-
-# Manually creating MySql
-
-Open a command prompt then issue this docker command
-
-```docker run --name db -e MYSQL_ROOT_PASSWORD=sacha -e MYSQL_USER=sacha -e MYSQL_PASSWORD=sacha -p 3306
-:3306 mysql:latest```
-
-Then open a 2nd command prompt and issue this docker command
-
-```
-docker exec -it db /bin/bash
-```
-
-Wait for that to complete, then issue a command to existing container
-
-```mysql -uroot -psacha```
-
-This should put you into MySql command prompt. In which case this should work
-
-
-```
-SELECT table_name, table_schema FROM INFORMATION_SCHEMA.TABLES
-WHERE TABLE_TYPE = 'BASE TABLE';
-```
-
-
-
+```docker run -it --link cassandra-1:cassandra --rm cassandra cqlsh cassandra --net simpleakkahttpservicewithcassandra_default```
 
 
 
@@ -87,7 +57,7 @@ So I then did this
 So I just copied the following files to C:\X
 
 - docker-compose.yml
-- SimpleAkkaHttpServiceWithMySql.jar
+- SimpleAkkaHttpServiceWithCassandra.jar
 - dockerfile
 
    
