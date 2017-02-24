@@ -5,7 +5,9 @@ services:
         hostname: cassandra-1
         image: cassandra:latest
         mem_limit: 1024m
-        command: /bin/bash -c "echo ' -- Pausing to let system catch up ...' && sleep 10 && /docker-entrypoint.sh cassandra -f"
+        environment:
+            - COMPOSE_PROJECT_NAME=cassandra-1
+        command: /bin/bash -c "echo ' -- Pausing to let system catch up ...' && sleep 60 && /docker-entrypoint.sh cassandra -f"
         expose:
             - 7000
             - 7001
@@ -15,7 +17,7 @@ services:
         # volumes: # uncomment if you desire mounts, also uncomment cluster.sh
         #   - ./data/cassandra-1:/var/lib/cassandra:rw
 
-    #cassandra-N:
+    # cassandra-N:
     #    hostname: cassandra-N
     #    image: cassandra:latest
     #    mem_limit: 1024m
