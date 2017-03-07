@@ -1,4 +1,4 @@
-name := "SimpleAkkaHttpServiceWithMySql"
+name := "SimpleAkkaHttpServiceWithCassandra"
 version := "1.0"
 scalaVersion := "2.11.7"
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
@@ -13,6 +13,13 @@ libraryDependencies ++= {
     "com.typesafe.akka" % "akka-http-experimental_2.11" % akkaStreamVersion,
     "com.datastax.cassandra" % "cassandra-driver-core" % "3.1.4"
   )
+}
+
+
+assemblyMergeStrategy in assembly := {
+  case PathList("META-INF", xs@_*) => MergeStrategy.discard
+  case n if n.startsWith("reference.conf") => MergeStrategy.concat
+  case _ => MergeStrategy.first
 }
 
 Revolver.settings
