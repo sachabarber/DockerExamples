@@ -1,4 +1,4 @@
-
+Ôªø
 <head>
 <style type="text/css">
 .auto-style1 {
@@ -52,6 +52,7 @@ https://github.com/sachabarber/DockerExamples</a></p>
 
 <h1>SOME DOCKER FUNDAMENTALS</h1>
 <p>This section will outline some of the fundamental ideas behind Docker</p>
+<p>&nbsp;</p>
 <h2>Images</h2>
 <p>Perhaps the most important idea to get your head around with docker is that 
 of images/image layers, and how these relate to containers.
@@ -109,7 +110,7 @@ data-volumes</a></p>
 <p><em>A data volume is a specially-designated directory within one or more 
 containers that bypasses the Union File System. Data volumes provide several 
 useful features for persistent or shared data:<br>Volumes are initialized when a 
-container is created. If the containerís base image contains data at the 
+container is created. If the container‚Äôs base image contains data at the 
 specified mount point, that existing data is copied into the new volume upon 
 volume initialization. (Note that this does not apply when mounting a host 
 directory.)</em></p>
@@ -120,8 +121,8 @@ directory.)</em></p>
 	image.</em></li>
 	<li><em>Data volumes persist even if the container itself is deleted.</em></li>
 	<li><em>Data volumes are designed to persist data, independent of the 
-	containerís life cycle. Docker therefore never automatically deletes volumes 
-	when you remove a container, nor will it ìgarbage collectî volumes that are 
+	container‚Äôs life cycle. Docker therefore never automatically deletes volumes 
+	when you remove a container, nor will it ‚Äúgarbage collect‚Äù volumes that are 
 	no longer referenced by a container.ost </em></li>
 </ul>
 <p>An example of creating a volume that will be mapped from a container to a 
@@ -129,7 +130,7 @@ host file system path would be as follows</p>
 <pre>
 $ docker run -d -P --name web -v /src/webapp:/webapp training/webapp python app.py
 </pre>
-<p><i>This command mounts the host directory, /src/webapp, into the container at /webapp. If the path /webapp already exists inside the containerís image, the /src/webapp mount overlays but does not remove the pre-existing content. Once the mount is removed, the content is accessible again. </i></p>
+<p><i>This command mounts the host directory, /src/webapp, into the container at /webapp. If the path /webapp already exists inside the container‚Äôs image, the /src/webapp mount overlays but does not remove the pre-existing content. Once the mount is removed, the content is accessible again. </i></p>
 <p><i>This is consistent with the expected behavior of the mount command.
 The container-dir must always be an absolute path such as /src/docs. The host-dir can either be an absolute path or a name value. If you supply an absolute path for the host-dir, Docker bind-mounts to the path you specify. If you supply a name, Docker creates a named volume by that name.</i></p>
 <p>&nbsp;</p>
@@ -138,6 +139,14 @@ The container-dir must always be an absolute path such as /src/docs. The host-di
 supports this both in the <a href="https://www.docker.com/">Docker</a> command 
 line and the richer <a href="https://docs.docker.com/compose/">Docker Compose</a> 
 file syntax, which we will see more of later.</p>
+<p>This is an example of setting an environment variable from the <a href="https://www.docker.com/">Docker</a> 
+command line, we will see a <a href="https://docs.docker.com/compose/">Docker Compose</a> 
+file example later. The <code>-e CASSANDRA_BROADCAST_ADDRESS=10.42.42.42</code> 
+is setting an environement variable that will be passed to the container being 
+created by the image here.</p>
+<pre>
+$ docker run --name some-cassandra -d -e CASSANDRA_BROADCAST_ADDRESS=10.42.42.42 -p 7000:7000 cassandra:tag</pre>
+<p>&nbsp;</p>
 <p>&nbsp;</p>
 <h2>Linking </h2>
 <p> <a href="https://www.docker.com/">Docker</a> comes with this idea of linking 
@@ -148,10 +157,26 @@ container. We could either run the MySQL database container up first, grab the
 IP address of it, and mangle the deployment of the web site some how to let is 
 know about the IP address of the database container, or we could use <a href="https://www.docker.com/">Docker</a> 
 linking.</p>
+<p> &nbsp;</p>
+<p>This is an example of setting an environment variable from the <a href="https://www.docker.com/">Docker</a> 
+command line, we will see a <a href="https://docs.docker.com/compose/">Docker Compose</a> 
+file example later. The <code>--link some-cassandra:cassandra</code> is linking 
+this new container creation request to an existing container called "cassandra". </p>
+<pre>
+$ docker run --name some-cassandra2 -d --link some-cassandra:cassandra cassandra:tag</pre>
+<p>&nbsp;</p>
 <p>In a nutshell <a href="https://www.docker.com/">Docker</a> linking allows to 
 express dependencies from one container to another, this may be done on the 
 command line or via <strong>docker-compose</strong>.This article will discuss 
 the <strong>docker-compose</strong> mechanism.</p>
+<p>Another feature of linking is that you may run interactive commands, say some 
+sort of SQL command line against an existing container. For example Apache 
+Cassandra comes with a command line utility called CQL which you can use to do 
+database command line stuff. Here is an example of running that against a 
+container that is already running Apache Cassandra.</p>
+<pre>
+$ docker run -it --link some-cassandra:cassandra --rm cassandra cqlsh cassandra</pre>
+<p>where some-cassandra is the name of your original Cassandra Server container</p>
 <p>&nbsp;</p>
 <h2>Networks</h2>
 <p>It would be a rare bit of software that did not need to expose a port or IP 
@@ -367,15 +392,413 @@ MySQL.</p>
 <p>&nbsp;</p>
 
 <h2>Simple Akka HTTP + MySQL Example</h2>
+<p>This example will build upon what we have just done, with the main difference 
+being that this time we will be running a Akka Htpp REST API that will talk to a 
+SINGLE MySQL server and will obtain some of the static data that is avaiable 
+within a MySQL server. This will introduce 3 new <a href="https://docs.docker.com/compose/">Docker Compose</a> 
+concepts, namely </p>
+<ul>
+	<li>volumes</li>
+	<li>environment variables</li>
+	<li>linking</li>
+	<li>multiple services starting in unison</li>
+</ul>
+<p>&nbsp;</p>
+<p>Here is the actual code we are going to trying to run. </p>
+<pre lang="scala">
+package SAS
+
+import akka.actor.ActorSystem
+import akka.event.Logging
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.server.Directives._
+import akka.stream.ActorMaterializer
+import com.typesafe.config.ConfigFactory
+import java.sql.{ResultSet, Connection, DriverManager}
+
+
+object DockerAkkaHttpMicroServiceUsingMySql {
+  implicit val system = ActorSystem()
+  implicit val executor = system.dispatcher
+  implicit val materializer = ActorMaterializer()
+
+  def main(args: Array[String]): Unit = {
+
+    val config = ConfigFactory.load()
+    val logger = Logging(system, getClass)
+
+
+    def getSomeMySqlData() : String = {
+      // connect to the database named "mysql" on port 3306 of localhost
+      val url = "jdbc:mysql://db:3306/mysql"
+      val driver = "com.mysql.jdbc.Driver"
+      val username = "root"
+      val password = "sacha"
+      var connection:Connection = null
+      var returnVal=""
+      try {
+        Class.forName(driver)
+        connection = DriverManager.getConnection(url, username, password)
+        val statement = connection.createStatement
+        val rs = statement.executeQuery("SELECT table_name, table_schema FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE';")
+
+        realize(rs).take(10).foreach(v=&gt;
+        {
+          val valuesList = v.values.toList
+          val tableName = valuesList(0)
+          val tableSchema = valuesList(1)
+          returnVal = returnVal + s"tableName= $tableName, tableSchema= $tableSchema\r\n"
+        })
+      } catch {
+        case e: Exception =&gt; e.printStackTrace
+      }
+      connection.close
+      returnVal
+    }
+
+
+    def buildMap(queryResult: ResultSet,
+                 colNames: Seq[String]): Option[Map[String, Object]] =
+      if (queryResult.next())
+        Some(colNames.map(n =&gt; n -&gt; queryResult.getObject(n)).toMap)
+      else
+        None
+
+    def realize(queryResult: ResultSet): Vector[Map[String, Object]] = {
+      val md = queryResult.getMetaData
+      val colNames = (1 to md.getColumnCount) map md.getColumnName
+      Iterator.continually(buildMap(queryResult, colNames))
+        .takeWhile(!_.isEmpty).map(_.get).toVector
+    }
+
+    val routes =
+      get {
+        pathSingleSlash {
+          complete {
+            getSomeMySqlData()
+          }
+        }
+      }
+
+    Http().bindAndHandle(routes,
+      config.getString("http.address"),
+      config.getInt("http.port"))
+
+  }
+}
+</pre>
+<p>Notice the connection to the MySQL database uses this line</p>
+<pre lang="scala">
+val url = "jdbc:mysql://db:3306/mysql"
+</pre>
+<p>&nbsp;</p>
+<p>Where does that come from, well if we examine the actual <a href="https://docs.docker.com/compose/">Docker Compose</a> 
+file, we may get to understand this. Here is the <a href="https://docs.docker.com/compose/">Docker Compose</a> 
+file for this example</p>
+<pre>
+version: '2'
+
+services:
+    db:
+        image: mysql:latest
+        volumes:
+            - db_data:/var/lib/mysql
+        restart: always
+        environment:
+            MYSQL_ROOT_PASSWORD: sacha
+            MYSQL_USER: sacha
+            MYSQL_PASSWORD: sacha
+        ports:
+            - "3306:3306"
+    webservice:
+        build: .
+        ports:
+            - "8080:8080"
+        depends_on:
+            - db
+volumes:
+    db_data:
+</pre>
+<p>There are several things to talk about here, namely</p>
+<p>&nbsp;</p>
+<p><strong>Volumes</strong></p>
+<p>The "db" project (MySQL see the mySql image (again from <a href="https://hub.docker.com/">DockerHub</a>)) 
+uses a volume to map from the MySQL world to the host container</p>
+<p><strong>Environment variables</strong></p>
+<p>The "db" project (MySQL see the mySql image (again from <a href="https://hub.docker.com/">DockerHub</a>)) 
+requires us to set some environment variables. We already saw how to set those 
+from the command line but above shows you how to set them in a 
+docker-compose.yaml file</p>
+<p><strong>Linking</strong></p>
+<p>As we&nbsp; already saw this time we want to run not only the Akka Http REST 
+api but also the MySQL database each in its own container. We obviously want to 
+connect to the MySQL database from the Akka Http api code. We saw something like 
+this in the Akka Http code base&nbsp;</p>
+<pre lang="scala">
+val url = "jdbc:mysql://db:3306/mysql"
+</pre>
+<p>So what this is doing is once the containers are up (there is a dependency 
+declared in the docker-commpose.yaml file, see the <strong>depends_on</strong>) 
+the database is avaiable using the name "db" on the port that it exposes "3306" 
+in this case. So we simply use that in our connection string. And since&nbsp;<a href="https://www.docker.com/">Docker</a> 
+takes care of the dependency for us, this is ok, we know the "db" will be 
+started before the Akka Http REST service.</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p><strong>Multiple services starting in unison</strong></p>
+<p>This is the first time we have seen more than one service starting up. This 
+time we have 2</p>
+<ul>
+	<li>db : The MySQL service</li>
+	<li>webservice : The Akka Http service</li>
+</ul>
+<p>Each with their own setup for the container requirements they need.</p>
+<p>As before we need to ensure that the Dockerfile/docker-compose.yaml and the 
+SimpleAkkaHttpServiceWithMySql.jar (as specified in the Dockerfile and build.sbt 
+files) are in the same directory.</p>
+<p>Then issue this command</p>
+<pre>
+docker-compose up --build</pre>
+<p>If all goes well we should see something like this</p>
+<p><a href="ComposeMySQL.png" target="_blank"><img alt="" height="428" src="ComposeMySQLSmall.png" width="600"></a></p>
+<p><em>CLICK FOR BIGGER IMAGE</em></p>
+<p>Another thing we can now do is open another command line and issue this 
+command to examine the running containers</p>
+<p><a href="ComposeMySQL2.png" target="_blank"><img alt="" height="135" src="ComposeMySQL2Small.png" width="600"></a></p>
+<p><em>CLICK FOR BIGGER IMAGE</em></p>
+<p>&nbsp;</p>
+<p>Now that we are happy its all up and running we can just use postman to test 
+the REST API.</p>
+<p><a href="ComposeMySQL3.png" target="_blank"><img alt="" height="338" src="ComposeMySQL3Small.png" width="600"></a></p>
+<p>&nbsp;</p>
+<p>See how it grabs this metadata from the running MySQL database. Pretty cool 
+huh. We are now able to setup fairly complex software requirements, the topics I 
+have just covered should get you a good way to easing your development woes. It 
+has certainly worked out well for me.</p>
+<p>&nbsp;</p>
 
 <h2>Simple Akka HTTP + Cassandra Scalable Cluster Example</h2>
+<p>The last example I wanted to cover in someways just builds on what we have 
+above in example 2, there is only one more new concept to cover, but its a nice 
+one. But before we go into that I just wanted to let you know why I chose to 
+pick Apache Cassandra as the final example.</p>
+<p>Apache Cassandra is a multinode distributed database, when new nodes may come 
+and go from what is known as the "cassandra ring".The ring is really a 
+distributed hash map, however Cassandra has one more interesting feature in that 
+it uses a GOSSIP protocol to ensure that each node knows and talks to each 
+other. Its how consensus is gathered, you need to reach a consensum to assume 
+that a bit of data is really persisted.</p>
+<p>This image may help</p>
+<p><a href="Cass1.png" target="_blank"><img alt="" height="428" src="Cass1Small.png" width="600"></a></p>
 
-<h1>&nbsp;</h1>
+<p><em>CLICK FOR BIGGER IMAGE</em></p>
+<p>Some tables/queries that you design may ONLY work if you have the right 
+number of nodes (usually odd so that consensus may be reached).</p>
+<p>As before here is the code that we are trying to run for this example</p>
+<pre lang="scala">
+package SAS
+
+import akka.actor.ActorSystem
+import akka.event.Logging
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.server.Directives._
+import akka.stream.ActorMaterializer
+import com.datastax.driver.core.{Session, ResultSet, Cluster}
+import com.typesafe.config.ConfigFactory
+import scala.collection.JavaConversions._
+
+
+object DockerAkkaHttpMicroServiceUsingCassandra {
+  implicit val system = ActorSystem()
+  implicit val executor = system.dispatcher
+  implicit val materializer = ActorMaterializer()
+
+  def main(args: Array[String]): Unit = {
+
+    val config = ConfigFactory.load()
+    val logger = Logging(system, getClass)
+
+    def getSomeCassandraData() : String = {
+
+      var cluster:Cluster = null
+      var returnVal="getSomeCassandraData\r\n"
+      try {
+        cluster = Cluster.builder()
+          .addContactPoint("cassandra-1")
+          .withPort(9042)
+          .build()
+        val session = cluster.connect()
+
+
+        returnVal = returnVal + "Before keyspace\r\n"
+        createKeySpace(session)
+        returnVal = returnVal + "After keyspace\r\n"
+
+        createTable(session)
+        returnVal = returnVal + "After table\r\n"
+
+        seedData(session)
+        returnVal = returnVal + "After seeding\r\n"
+
+        returnVal = returnVal + "\r\n"
+        val rs = session.execute("select category, points, lastname from dockercassandra.cyclist_category")
+
+        val iter = rs.iterator()
+        while (iter.hasNext()) {
+          if (rs.getAvailableWithoutFetching() == 100 && !rs.isFullyFetched())
+            rs.fetchMoreResults()
+          val row = iter.next()
+            returnVal = returnVal + s"category= ${row.getString("category")}, " +
+              s"points= ${row.getInt("points")}, lastname= ${row.getString("lastname")}\r\n"
+
+        }
+      }
+      catch {
+        case e: Exception =&gt; {
+          e.printStackTrace
+          returnVal = e.printStackTrace().toString
+        }
+      } finally {
+        if (cluster != null) cluster.close()
+      }
+      returnVal
+    }
+
+    def createKeySpace(session : Session) : Unit = {
+      session.execute(
+        """CREATE KEYSPACE IF NOT EXISTS DockerCassandra
+            WITH replication = {
+                 'class':'SimpleStrategy',
+                 'replication_factor' : 3
+               };""")
+    }
+
+
+    def createTable(session : Session) : Unit = {
+      session.execute(
+        """CREATE TABLE IF NOT EXISTS dockercassandra.cyclist_category (
+             category text,
+             points int,
+             lastname text,
+             PRIMARY KEY (category, points))
+          WITH CLUSTERING ORDER BY (points DESC);""")
+    }
+
+    def seedData(session : Session) : Unit = {
+      session.execute("TRUNCATE dockercassandra.cyclist_category;")
+      session.execute("INSERT INTO dockercassandra.cyclist_category (category, points, lastname) VALUES ('cat1', 15, 'barber');");
+      session.execute("INSERT INTO dockercassandra.cyclist_category (category, points, lastname) VALUES ('cat2', 25, 'smith');");
+      session.execute("INSERT INTO dockercassandra.cyclist_category (category, points, lastname) VALUES ('cat3', 45, 'evans');");
+      session.execute("INSERT INTO dockercassandra.cyclist_category (category, points, lastname) VALUES ('cat4', 65, 'harth');");
+    }
+
+    val routes =
+      get {
+        pathSingleSlash {
+          complete {
+            getSomeCassandraData()
+            //"getting cass"
+          }
+        }
+      }
+
+    Http().bindAndHandle(routes,
+      config.getString("http.address"),
+      config.getInt("http.port"))
+
+  }
+}
+</pre>
+<p>&nbsp;</p>
+<p>As before thanks to what we now know about linking we can use the "cassandra-1" 
+container and also use its port.</p>
+<p>However ith such a possibly large database with many nodes, how would we even 
+express that in a <a href="https://docs.docker.com/compose/">Docker Compose</a> 
+file, surely we don't need to express 5 or 7 or 9 seperate Cassandra services in 
+the <a href="https://docs.docker.com/compose/">Docker Compose</a> 
+file do we?</p>
+<p>No actually we do not, <a href="https://www.docker.com/">Docker</a> has a 
+nice helpful thing we can do here. Lets look at the&nbsp;<a href="https://docs.docker.com/compose/">Docker Compose</a> 
+file first though, here it is</p>
+<pre>
+version: '2'
+
+services:
+    cassandra-1:
+        image: cassandra:latest
+        command: /bin/bash -c "echo ' -- Pausing to let system catch up ...' && sleep 10 && /docker-entrypoint.sh cassandra -f"
+        expose:
+            - 7000
+            - 7001
+            - 7199
+            - 9042
+            - 9160
+       # volumes: # uncomment if you desire mounts, also uncomment cluster.sh
+       #   - ./data/cassandra-1:/var/lib/cassandra:rw
+
+    cassandra-N:
+        image: cassandra:latest
+        command: /bin/bash -c "echo ' -- Pausing to let system catch up ...' && sleep 30 && /docker-entrypoint.sh cassandra -f"
+        environment:
+            - CASSANDRA_SEEDS=cassandra-1
+        links:
+            - cassandra-1:cassandra-1
+        expose:
+            - 7000
+            - 7001
+            - 7199
+            - 9042
+            - 9160
+        # volumes: # uncomment if you desire mounts, also uncomment cluster.sh
+        #   - ./data/cassandra-2:/var/lib/cassandra:rw
+
+
+    webservice:
+        build: .
+        ports:
+            - "8080:8080"
+        depends_on:
+            - cassandra-1
+</pre>
+<p>It is basically what we have seen (more of the same) the only difference 
+being that we now have this new container "cassandra-N" which links through to 
+the main "cassandra-1" container, and it also sets a Cassandra specific 
+environment variable to ensure the ring is formed.</p>
+<p>As before we need to ensure that the Dockerfile/docker-compose.yaml and the 
+SimpleAkkaHttpServiceWithCassandra.jar (as specified in the Dockerfile and build.sbt 
+files) are in the same directory.</p>
+<p>Then issue this command</p>
+<pre>
+docker-compose up --build</pre>
+<p>It would all work out fine, as shown below</p>
+<p>&nbsp;</p>
+<p><a href="Cass2.png" target="_blank"><img alt="" height="426" src="Cass2Small.png" width="600"></a></p>
+<p><em>CLICK FOR BIGGER IMAGE</em></p>
+<p>As can be seen when we run our old friend postman</p>
+<p>&nbsp;</p>
+<p><a href="Cass3.png" target="_blank"><img alt="" height="338" src="Cass3Small.png" width="600"></a></p>
+<p><em>CLICK FOR BIGGER IMAGE</em></p>
+<p>This is all good and works fine, but what if we want more nodes in our ring? 
+Well it turns out <a href="https://docs.docker.com/compose/">Docker Compose</a>&nbsp; 
+lets us do this, we simple use this magic command instead notice the "<strong>scale</strong>" 
+part.</p>
+<pre>docker-compose scale webservice=1 cassandra-1=1 cassandra-N=4</pre>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
 <h1>FURTHER READINGS</h1>
+<p>Other codeproject articles</p>
 <ul>
 	<li>
 	<a href="https://www.codeproject.com/Articles/1094603/Learn-Docker-by-building-a-Microservice">
-	https://www.codeproject.com/Articles/1094603/Learn-Docker-by-building-a-Microservice</a></li>
+	https://www.codeproject.com/Articles/1094603/Learn-Docker-by-building-a-Microservice</a> 
+	by Dave Kerr. I would strongly recommend that you read this, this is 
+	certainly one of the better Docker articles written, and I am personally a 
+	very big fan of Daves articles, he puts in the miles, and it shows</li>
+</ul>
+<p>These are also fairly essential reading if you ask me</p>
+<ul>
 	<li><a href="https://docs.docker.com/compose/">Docker Compose</a></li>
 	<li><a href="https://www.docker.com/">Docker</a></li>
 	<li>
