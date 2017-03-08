@@ -1,4 +1,4 @@
-﻿
+
 <head>
 <style type="text/css">
 .auto-style1 {
@@ -7,9 +7,57 @@
 </style>
 </head>
 
-<div id="TOC"></div>
+<ul>
+<li><a href="#INTRODUCTION">INTRODUCTION</a></li>
 
-<h1>INTRODUCTION</h1>
+<li><a href="#WHERE-IS-THE-CODE">WHERE IS THE CODE</a></li>
+
+<li><a href="#SOME-DOCKER-FUNDAMENTALS">SOME DOCKER FUNDAMENTALS</a>
+<ul>
+<li><a href="#Images">Images</a></li>
+
+<li><a href="#Volumes">Volumes</a></li>
+
+<li><a href="#Environment-Variables&nbsp;">Environment Variables&nbsp;</a></li>
+
+<li><a href="#Linking-">Linking </a></li>
+
+<li><a href="#Networks">Networks</a></li>
+
+<li><a href="#Dockerfile">Dockerfile</a></li>
+
+<li><a href="#Docker-Compose">Docker Compose</a>
+<ul>
+<li><a href="#Akka-Http">Akka Http</a></li>
+
+<li><a href="#Scala-/-SBT">Scala / SBT</a></li>
+
+<li><a href="#Fat-Jar">Fat Jar</a><a href="#&nbsp;">&nbsp;</a></li>
+
+<li><a href="#Dockerfile">Dockerfile</a></li>
+
+</ul>
+
+</ul>
+
+<li><a href="#3-EXAMPLES">3 EXAMPLES</a>
+<ul>
+<li><a href="#Simple-Akka-HTTP-Example">Simple Akka HTTP Example</a></li>
+
+<li><a href="#Simple-Akka-HTTP-+-MySQL-Example">Simple Akka HTTP + MySQL Example</a></li>
+
+<li><a href="#Simple-Akka-HTTP-+-Cassandra-Scalable-Cluster-Example">Simple Akka HTTP + Cassandra Scalable Cluster Example</a></li>
+
+</ul>
+
+<li><a href="#FURTHER-READINGS">FURTHER READINGS</a></li>
+
+<li><a href="#CONCLUSION">CONCLUSION</a></li>
+
+</ul>
+
+
+<h1><a name="INTRODUCTION" id="INTRODUCTION">INTRODUCTION</a></h1>
 <p>A while ago I worked on a project that used this tech stack</p>
 <ul>
 	<li><strong>Akka HTTP : </strong>(actually we used Spray.IO but it is 
@@ -20,21 +68,21 @@
 	open-source distributed database management system designed to handle large 
 	amounts of data across many commodity servers, providing high availability 
 	with no single point of failure. Cassandra offers robust support for 
-	clusters spanning multiple datacenters,with asynchronous masterless 
+	clusters spanning multiple datacenters, with asynchronous masterless 
 	replication allowing low latency operations for all clients.</li>
 </ul>
-<p class="auto-style1">It is a multi node clutster</p>
+<p class="auto-style1">It is a multi node cluster</p>
 <p class="auto-style1">&nbsp;</p>
 <p>This was a pain to test, and we were always stepping on each others toes, as 
-you can imagine running up a 5 node cluster of VMs just to satisy my each 
-devekopers own testing needs was a bit much. So we ended up with some dedicated 
-test environments, running 5 cassandra nodes. These was still a PITA to be 
+you can imagine running up a 5 node cluster of VMs just to satisfy my each 
+developers own testing needs was a bit much. So we ended up with some dedicated 
+test environments, running 5 Cassandra nodes. These was still a PITA to be 
 honest. </p>
 <p>This got me thinking perhaps I could use <a href="https://www.docker.com/">
 Docker</a> to help me out here, perhaps I could run Cassandra in a
 <a href="https://www.docker.com/">Docker</a> container, hell perhaps I could 
 even run my own code that uses Cassandra in a <a href="https://www.docker.com/">
-Docker</a> container, and just point my UI at the Akk HTTP REST server running 
+Docker</a> container, and just point my UI at the Akka HTTP REST server running 
 in <a href="https://www.docker.com/">Docker</a>. mmmmm</p>
 <p>I started to dig around, and of course this is entirely possible (otherwise I 
 would not be writing this article now would I).</p>
@@ -42,7 +90,7 @@ would not be writing this article now would I).</p>
 <a href="https://www.docker.com/">Docker</a> articles,&nbsp; but I never found 
 one that talked about Cassandra, so I thought why not write another one.</p>
 <p>&nbsp;</p>
-<h1>WHERE IS THE CODE</h1>
+<h1><a name="WHERE-IS-THE-CODE" id="WHERE-IS-THE-CODE">WHERE IS THE CODE</a></h1>
 <p>The code can be located here :
 <a href="https://github.com/sachabarber/DockerExamples">
 https://github.com/sachabarber/DockerExamples</a></p>
@@ -50,10 +98,10 @@ https://github.com/sachabarber/DockerExamples</a></p>
 <p>&nbsp;</p>
 
 
-<h1>SOME DOCKER FUNDAMENTALS</h1>
+<h1><a name="SOME-DOCKER-FUNDAMENTALS" id="SOME-DOCKER-FUNDAMENTALS">SOME DOCKER FUNDAMENTALS</a></h1>
 <p>This section will outline some of the fundamental ideas behind Docker</p>
 <p>&nbsp;</p>
-<h2>Images</h2>
+<h2><a name="Images" id="Images">Images</a></h2>
 <p>Perhaps the most important idea to get your head around with docker is that 
 of images/image layers, and how these relate to containers.
 <a href="https://www.docker.com/">Docker</a> works on the idea of a layered 
@@ -68,9 +116,9 @@ images. Where each image is a new layer over the one beneath.</p>
 	<li>Apache</li>
 </ul>
 <p>Each of these layers wil build upon the one below. What do I mean by build 
-apon? Quite simply it will add/remove/alter files on the
-<a href="https://www.docker.com/">Docker</a> filesystem. It is by altering the
-<a href="https://www.docker.com/">Docker</a> filesystem in this way that we are 
+upon? Quite simply it will add/remove/alter files on the
+<a href="https://www.docker.com/">Docker</a> file system. It is by altering the
+<a href="https://www.docker.com/">Docker</a> file system in this way that we are 
 able to build up very complex images. This example would end up with a container 
 (that could be used as a new image) that would be capable of running Apache&nbsp; 
 + Emacs on Ubuntu.</p>
@@ -79,13 +127,13 @@ able to build up very complex images. This example would end up with a container
 <p>As I stated above <a href="https://www.docker.com/">Docker</a> has a vibrant 
 community behind it, and it also has a cloud repository of base images that
 <a href="https://www.docker.com/">Docker</a> or the community have created. </p>
-<p>For example say I wanted to use cassandra, I would simple got to
+<p>For example say I wanted to use Cassandra, I would simple got to
 <a href="https://hub.docker.com/">https://hub.docker.com/</a> and search for 
 cassandra, which would give me a page like this</p>
 <p>&nbsp;</p>
 <p><a href="DockerHub.png" target="_blank"><img alt="" height="338" src="DockerHubSmall.png" width="600"></a></p>
 <p><i>CLICK FOR BIGGER IMAGE</i>&nbsp;</p>
-<p>In this case there is an official version from the cassandra maintainers, but 
+<p>In this case there is an official version from the Cassandra maintainers, but 
 sometimes you can expect this to be community based.</p>
 <p>In some cases where an official image is available you may get some good 
 documentation telling you things like</p>
@@ -95,7 +143,7 @@ documentation telling you things like</p>
 	<li>How to link containers</li>
 </ul>
 <p>&nbsp;</p>
-<h2>Volumes</h2>
+<h2><a name="Volumes" id="Volumes">Volumes</a></h2>
 <p>Occasionally a bit of software you use will want to use a certain directory 
 for some purpose or another, most typically config, or logging. It would be nice 
 to expose this outside of a container, such that it could map to some physical 
@@ -106,7 +154,7 @@ allows you to create a mapping from container path to host path. You can read
 more about this at this link :
 <a href="https://docs.docker.com/engine/tutorials/dockervolumes/#data-volumes">
 data-volumes</a></p>
-<p>Here is what the offical Docker docs have to say about volumes</p>
+<p>Here is what the official Docker docs have to say about volumes</p>
 <p><em>A data volume is a specially-designated directory within one or more 
 containers that bypasses the Union File System. Data volumes provide several 
 useful features for persistent or shared data:<br>Volumes are initialized when a 
@@ -123,7 +171,7 @@ directory.)</em></p>
 	<li><em>Data volumes are designed to persist data, independent of the 
 	container’s life cycle. Docker therefore never automatically deletes volumes 
 	when you remove a container, nor will it “garbage collect” volumes that are 
-	no longer referenced by a container.ost </em></li>
+	no longer referenced by a container host </em></li>
 </ul>
 <p>An example of creating a volume that will be mapped from a container to a 
 host file system path would be as follows</p>
@@ -134,7 +182,7 @@ $ docker run -d -P --name web -v /src/webapp:/webapp training/webapp python app.
 <p><i>This is consistent with the expected behavior of the mount command.
 The container-dir must always be an absolute path such as /src/docs. The host-dir can either be an absolute path or a name value. If you supply an absolute path for the host-dir, Docker bind-mounts to the path you specify. If you supply a name, Docker creates a named volume by that name.</i></p>
 <p>&nbsp;</p>
-<h2>Environment Variables&nbsp;</h2>
+<h2><a name="Environment-Variables&nbsp;" id="Environment-Variables&nbsp;">Environment Variables&nbsp;</a></h2>
 <p>Some software may also be setup to use environment variables. Luckily docker 
 supports this both in the <a href="https://www.docker.com/">Docker</a> command 
 line and the richer <a href="https://docs.docker.com/compose/">Docker Compose</a> 
@@ -145,10 +193,10 @@ file example later. The <code>-e CASSANDRA_BROADCAST_ADDRESS=10.42.42.42</code>
 is setting an environement variable that will be passed to the container being 
 created by the image here.</p>
 <pre>
-$ docker run --name some-cassandra -d -e CASSANDRA_BROADCAST_ADDRESS=10.42.42.42 -p 7000:7000 cassandra:tag</pre>
+$ docker run --name some-Cassandra -d -e CASSANDRA_BROADCAST_ADDRESS=10.42.42.42 -p 7000:7000 cassandra:tag</pre>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
-<h2>Linking </h2>
+<h2><a name="Linking-" id="Linking-">Linking </a></h2>
 <p> <a href="https://www.docker.com/">Docker</a> comes with this idea of linking 
 containers together. But why would you want that? So lets imagine we have a web 
 site that is able to run in a <a href="https://www.docker.com/">Docker</a> 
@@ -178,7 +226,7 @@ container that is already running Apache Cassandra.</p>
 $ docker run -it --link some-cassandra:cassandra --rm cassandra cqlsh cassandra</pre>
 <p>where some-cassandra is the name of your original Cassandra Server container</p>
 <p>&nbsp;</p>
-<h2>Networks</h2>
+<h2><a name="Networks" id="Networks">Networks</a></h2>
 <p>It would be a rare bit of software that did not need to expose a port or IP 
 address to accept input from the user. Luckily this is entirely possible with <a href="https://www.docker.com/">Docker</a>. 
 In fact <a href="https://www.docker.com/">Docker</a> offers very rich networking 
@@ -188,17 +236,17 @@ walk through I urge you to read more on this subject (it is a big subject) :
 <a href="https://docs.docker.com/engine/userguide/networking/">
 https://docs.docker.com/engine/userguide/networking/</a></p>
 <p>&nbsp;</p>
-<h2>Dockerfile</h2>
+<h2><a name="Dockerfile" id="Dockerfile">Dockerfile</a></h2>
 <p>Docker can build images automatically by reading the instructions from a 
 Dockerfile. A Dockerfile is a text document that contains all the commands a 
 user could call on the command line to assemble an image. Using docker build 
 users can create an automated build that executes several command-line 
 instructions in succession.</p>
 <p>&nbsp;</p>
-<h2>Docker Compose</h2>
+<h2><a name="Docker-Compose" id="Docker-Compose">Docker Compose</a></h2>
 <p>Whilst the <a href="https://www.docker.com/">Docker</a> line does allow you 
 to do pretty much anything with containers/images, sometimes what you are 
-looking for is a more contained descciption of you software stack. Something 
+looking for is a more contained description of you software stack. Something 
 like:</p>
 <ul>
 	<li>I have a web site</li>
@@ -210,11 +258,11 @@ like:</p>
 Fortunately <a href="https://www.docker.com/">Docker</a> allows this with 
 something called <a href="https://docs.docker.com/compose/">Docker Compose</a> 
 which allows us to describe ALL our requirements in one file, and bring it all 
-up in one go. We will be seeing 3 exanokes of this in the rest of the article</p>
+up in one go. We will be seeing 3 examples of this in the rest of the article</p>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
 
-<h1>3 EXAMPLES</h1>
+<h1><a name="3-EXAMPLES" id="3-EXAMPLES">3 EXAMPLES</a></h1>
 <p>Ok so I now know that there is a place where I can grab images, well that's 
 grand, but how do I get <strong>MY </strong>software to run with one of these 
 images?</p>
@@ -226,7 +274,7 @@ just build up the example a bit more each time</p>
 <p>But before we get into the examples there are a couple of common points which 
 they all share</p>
 <p>&nbsp;</p>
-<h3>Akka Http</h3>
+<h3><a name="Akka-Http" id="Akka-Http">Akka Http</a></h3>
 <p>They all use Akka HTTP, which as I have stated above is a Akka based REST 
 api. A bare bones Akka Http application may look something like this (this is 
 with a single default GET&nbsp; route)</p>
@@ -273,11 +321,11 @@ route, we would see something like this</p>
 <p>So that is what we expect a running Akka Http application to be able to do, 
 basically response with some viable response to a REST call.</p>
 <p>&nbsp;</p>
-<h3>Scala / SBT</h3>
+<h3><a name="Scala-/-SBT" id="Scala-/-SBT">Scala / SBT</a></h3>
 <p>I am using a scala/sbt stack, as such I will be using SBT to build the code 
 that goes with this article.</p>
 <p>&nbsp;</p>
-<h3>Fat Jar</h3>
+<h3><a name="Fat-Jar" id="Fat-Jar">Fat Jar</a></h3>
 <p>I also create a fat Jar. Which means the end result once all the dependencies 
 have been added in which be a single .jar file. The SBT file for example 1 looks 
 like this, the others are similar just with different dependencies</p>
@@ -300,8 +348,8 @@ libraryDependencies ++= {
 
 Revolver.settings
 </pre>
-<h3>&nbsp;</h3>
-<h3>Dockerfile</h3>
+<h3><a name="&nbsp;" id="&nbsp;">&nbsp;</a></h3>
+<h3><a name="Dockerfile" id="Dockerfile">Dockerfile</a></h3>
 <p>Each of the examples will be expected to run MY OWN code in a container. </p>
 <p>So how does that happen exactly, I know we talked about layers and being able 
 to build on top of layers of other images. Yes spot on, its exactly that, we use 
@@ -385,16 +433,16 @@ well I did, but trust me this does work.</p>
 pretty elaborate setups, as we will see in the 3 examples below.</p>
 <p>&nbsp;</p>
 
-<h2>Simple Akka HTTP Example</h2>
+<h2><a name="Simple-Akka-HTTP-Example" id="Simple-Akka-HTTP-Example">Simple Akka HTTP Example</a></h2>
 <p>This is as above, we just used the 1st example to pave the way for other 
 examples. Next time we will build apon what we have an add a dependency on 
 MySQL.</p>
 <p>&nbsp;</p>
 
-<h2>Simple Akka HTTP + MySQL Example</h2>
+<h2><a name="Simple-Akka-HTTP-+-MySQL-Example" id="Simple-Akka-HTTP-+-MySQL-Example">Simple Akka HTTP + MySQL Example</a></h2>
 <p>This example will build upon what we have just done, with the main difference 
-being that this time we will be running a Akka Htpp REST API that will talk to a 
-SINGLE MySQL server and will obtain some of the static data that is avaiable 
+being that this time we will be running a Akka Http REST API that will talk to a 
+SINGLE MySQL server and will obtain some of the static data that is available 
 within a MySQL server. This will introduce 3 new <a href="https://docs.docker.com/compose/">Docker Compose</a> 
 concepts, namely </p>
 <ul>
@@ -577,7 +625,7 @@ have just covered should get you a good way to easing your development woes. It
 has certainly worked out well for me.</p>
 <p>&nbsp;</p>
 
-<h2>Simple Akka HTTP + Cassandra Scalable Cluster Example</h2>
+<h2><a name="Simple-Akka-HTTP-+-Cassandra-Scalable-Cluster-Example" id="Simple-Akka-HTTP-+-Cassandra-Scalable-Cluster-Example">Simple Akka HTTP + Cassandra Scalable Cluster Example</a></h2>
 <p>The last example I wanted to cover in someways just builds on what we have 
 above in example 2, there is only one more new concept to cover, but its a nice 
 one. But before we go into that I just wanted to let you know why I chose to 
@@ -787,7 +835,7 @@ part.</p>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
 <p>&nbsp;</p>
-<h1>FURTHER READINGS</h1>
+<h1><a name="FURTHER-READINGS" id="FURTHER-READINGS">FURTHER READINGS</a></h1>
 <p>Other codeproject articles</p>
 <ul>
 	<li>
@@ -806,5 +854,5 @@ part.</p>
 	Akka Http</a></li>
 </ul>
 <p>&nbsp;</p>
-<h1>CONCLUSION</h1>
+<h1><a name="CONCLUSION" id="CONCLUSION">CONCLUSION</a></h1>
 <p>As always if you like what you see here, a vote/comment is most welcome</p>
