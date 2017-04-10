@@ -56,7 +56,7 @@ object DockerAkkaHttpMicroServiceUsingCassandra {
         }
       }
       catch {
-        case e: Exception => {
+        case e: Exception =&gt; {
           e.printStackTrace
           returnVal = e.printStackTrace().toString
         }
